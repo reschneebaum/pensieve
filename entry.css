@@ -23,6 +23,17 @@ h1 { font-size: 22px; margin: 0; }
   color: var(--dim); border: 1px solid var(--line); border-radius: 999px; padding: 2px 9px;
 }
 
+/* Desktop display controls */
+.display-ctl {
+  display: flex; flex-direction: column; gap: 10px;
+  background: var(--card); border: 1px solid var(--line);
+  border-radius: 12px; padding: 12px; margin-bottom: 18px;
+}
+.dc-title { font-size: 13px; color: var(--dim); font-weight: 600; }
+.dc-row { display: flex; align-items: center; gap: 12px; }
+.dc-label { font-size: 13px; color: var(--dim); width: 42px; flex: none; }
+.display-ctl .seg { flex: 1; }
+
 form { display: flex; flex-direction: column; gap: 14px; }
 .field { display: flex; flex-direction: column; gap: 6px; }
 .field > span { font-size: 13px; color: var(--dim); }

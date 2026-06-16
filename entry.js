@@ -3,7 +3,10 @@
 // updates the moment you hit save.
 
 import { CATEGORIES } from "./config.js";
-import { getItems, upsertItem, deleteItem, onChange, MODE } from "./store.js";
+import {
+  getItems, upsertItem, deleteItem, onChange, MODE,
+  getSettings, setSettings, onSettingsChange,
+} from "./store.js";
 import { uid, toLocalInput, toDateInput, startOfWeek, addDays, sameDay, categoryById, priorityIcon, fmtTime } from "./util.js";
 
 const $ = (s) => document.querySelector(s);
@@ -156,6 +159,37 @@ function escapeHtml(s) {
   );
 }
 
+// ── Desktop display controls ───────────────────────────────────────────────
+// These write the synced settings the display reads, so flipping a toggle here
+// repaints every (un-pinned) display device. Note: a screen pinned via a URL
+// param (?view=…) ignores these — that override is intentional.
+function activate(seg, attr, val) {
+  seg.querySelectorAll("button").forEach((b) =>
+    b.classList.toggle("active", b.dataset[attr] === val)
+  );
+}
+
+function reflectSettings(s) {
+  activate($("#view-seg"), "view", s.view);
+  activate($("#show-seg"), "show", s.show);
+}
+
+function wireDisplayControls() {
+  const bind = (segSel, attr) =>
+    $(segSel).querySelectorAll("button").forEach((b) =>
+      b.addEventListener("click", async () => {
+        activate($(segSel), attr, b.dataset[attr]); // optimistic
+        try {
+          await setSettings({ [attr]: b.dataset[attr] });
+        } catch (e) {
+          console.error("settings save failed", e);
+        }
+      })
+    );
+  bind("#view-seg", "view");
+  bind("#show-seg", "show");
+}
+
 function main() {
   $("#mode").textContent = MODE === "cloud" ? "synced" : "local only";
   buildCats();
@@ -167,6 +201,10 @@ function main() {
     const id = $("#id").value;
     if (id) { await deleteItem(id); resetForm(); await renderList(); }
   });
+  wireDisplayControls();
+  getSettings().then(reflectSettings).catch((e) => console.error(e));
+  onSettingsChange(async () => reflectSettings(await getSettings()));
+
   resetForm();
   renderList();
   onChange(renderList);
