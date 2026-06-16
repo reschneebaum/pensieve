@@ -264,3 +264,10 @@ body {
   color: var(--text-dim);
   font-size: 15px;
 }
+
+/* ── Low-distraction mode (?chrome=off) ───────────────────────
+   For the desktop wallpaper: hide the header (date + color key + synced pill)
+   and to-do notes, leaving the calendar grid. The faint hour lines, hour
+   labels and day headers stay, so events keep their spatial context. */
+.chrome-off #topbar { display: none; }
+.chrome-off .todo-notes { display: none; }

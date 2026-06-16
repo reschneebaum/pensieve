@@ -397,6 +397,12 @@ async function refresh() {
 async function main() {
   buildLegend();
   override = urlOverrides();
+  // Low-distraction mode for the desktop wallpaper: ?chrome=off hides the
+  // header, color key and to-do notes, leaving the calendar itself. Per-device
+  // (it rides the URL, not the synced setting) so the iPad/monitor stays full.
+  if (new URLSearchParams(location.search).get("chrome") === "off") {
+    document.body.classList.add("chrome-off");
+  }
   settings = await getSettings();
   await refresh();
   await onChange(refresh);
