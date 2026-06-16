@@ -1,3 +1,11 @@
 {
-  "redirects": [{ "source": "/", "destination": "/display.html", "permanent": false }]
+  "redirects": [{ "source": "/", "destination": "/display.html", "permanent": false }],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=0, must-revalidate" }
+      ]
+    }
+  ]
 }
