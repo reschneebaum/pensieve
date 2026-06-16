@@ -53,7 +53,9 @@ body {
 .legend-dot { width: 11px; height: 11px; border-radius: 3px; }
 
 /* ── Grid scaffold ────────────────────────────────────────── */
-#grid { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+/* Generic mount point; the active view renderer fills it. The week view lays
+   itself out as a column (all-day row above the time grid). */
+.view-root { flex: 1; display: flex; flex-direction: column; min-height: 0; }
 
 .allday-row {
   display: grid;

@@ -28,3 +28,47 @@ create policy "anon full access" on public.items
 -- Realtime: make sure the table is in the realtime publication so the
 -- desktop display updates the instant your phone writes a change.
 alter publication supabase_realtime add table public.items;
+
+
+-- ─────────────────────────────────────────────────────────────────────────
+-- Display settings (added for the view switcher).
+--
+-- A tiny key→jsonb table. glance-cal uses a single row, id = 'display', whose
+-- value holds { "view": "week"|"day", "show": "calendar"|"todo"|"both" }. The
+-- phone (entry app) writes it; the desktop display subscribes and repaints. If
+-- the row is absent, the display falls back to its defaults (week / both), so
+-- existing installs keep working without touching this table.
+--
+-- Safe to run on an existing database — everything here is idempotent.
+-- ─────────────────────────────────────────────────────────────────────────
+
+create table if not exists public.settings (
+  id          text primary key,
+  value       jsonb not null default '{}'::jsonb,
+  updated_at  timestamptz not null default now()
+);
+
+alter table public.settings enable row level security;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_policies
+    where schemaname = 'public' and tablename = 'settings'
+      and policyname = 'anon full access'
+  ) then
+    create policy "anon full access" on public.settings
+      for all using (true) with check (true);
+  end if;
+end $$;
+
+do $$
+begin
+  if not exists (
+    select 1 from pg_publication_tables
+    where pubname = 'supabase_realtime'
+      and schemaname = 'public' and tablename = 'settings'
+  ) then
+    alter publication supabase_realtime add table public.settings;
+  end if;
+end $$;
