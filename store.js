@@ -10,10 +10,18 @@
 import { config } from "./config.js";
 
 const LOCAL_KEY = "glancecal.items.v1";
+const SETTINGS_LOCAL_KEY = "glancecal.settings.v1";
 export const MODE = config.supabaseUrl && config.supabaseAnonKey ? "cloud" : "local";
+
+// The single settings row the display reads. Defaults reproduce the original
+// behavior (week view, everything shown) so installs without a settings row —
+// or without the table — keep working unchanged.
+const SETTINGS_ID = "display";
+export const DEFAULT_SETTINGS = { view: "week", show: "both" };
 
 let supabase = null;
 const listeners = new Set();
+const settingsListeners = new Set();
 
 async function getClient() {
   if (supabase) return supabase;
@@ -36,6 +44,18 @@ function localWrite(items) {
   localStorage.setItem(LOCAL_KEY, JSON.stringify(items));
   // Notify this tab; other tabs get the native `storage` event below.
   listeners.forEach((cb) => cb());
+}
+
+function localReadSettings() {
+  try {
+    return { ...DEFAULT_SETTINGS, ...JSON.parse(localStorage.getItem(SETTINGS_LOCAL_KEY)) };
+  } catch {
+    return { ...DEFAULT_SETTINGS };
+  }
+}
+function localWriteSettings(value) {
+  localStorage.setItem(SETTINGS_LOCAL_KEY, JSON.stringify(value));
+  settingsListeners.forEach((cb) => cb());
 }
 
 // ── Public API ─────────────────────────────────────────────────────────────
@@ -71,6 +91,73 @@ export async function deleteItem(id) {
   const sb = await getClient();
   const { error } = await sb.from("items").delete().eq("id", id);
   if (error) throw error;
+}
+
+// ── Display settings ─────────────────────────────────────────────────────
+// view/mode for the display, controlled from the phone and synced to every
+// display device. Same dual-mode contract as items: cloud uses a `settings`
+// row, local uses localStorage. Always merged over DEFAULT_SETTINGS so a
+// missing row (or a missing table on an un-migrated database) is harmless.
+export async function getSettings() {
+  if (MODE === "local") return localReadSettings();
+  try {
+    const sb = await getClient();
+    const { data, error } = await sb
+      .from("settings")
+      .select("value")
+      .eq("id", SETTINGS_ID)
+      .maybeSingle();
+    if (error) throw error;
+    return { ...DEFAULT_SETTINGS, ...(data?.value ?? {}) };
+  } catch (e) {
+    // Table not migrated yet, or a transient error — fall back to defaults
+    // rather than breaking the display.
+    console.warn("settings load failed, using defaults", e);
+    return { ...DEFAULT_SETTINGS };
+  }
+}
+
+export async function setSettings(partial) {
+  const current = await getSettings();
+  const value = { ...current, ...partial };
+  if (MODE === "local") {
+    localWriteSettings(value);
+    return value;
+  }
+  const sb = await getClient();
+  const { error } = await sb
+    .from("settings")
+    .upsert({ id: SETTINGS_ID, value, updated_at: new Date().toISOString() });
+  if (error) throw error;
+  return value;
+}
+
+// Subscribe to settings changes. Returns an unsubscribe function.
+export async function onSettingsChange(cb) {
+  settingsListeners.add(cb);
+
+  if (MODE === "local") {
+    const handler = (e) => {
+      if (e.key === SETTINGS_LOCAL_KEY) cb();
+    };
+    window.addEventListener("storage", handler);
+    return () => {
+      settingsListeners.delete(cb);
+      window.removeEventListener("storage", handler);
+    };
+  }
+
+  const sb = await getClient();
+  const channel = sb
+    .channel("settings-changes")
+    .on("postgres_changes", { event: "*", schema: "public", table: "settings" }, () =>
+      cb()
+    )
+    .subscribe();
+  return () => {
+    settingsListeners.delete(cb);
+    sb.removeChannel(channel);
+  };
 }
 
 // Subscribe to changes (any device in cloud mode, any tab in local mode).

@@ -16,6 +16,25 @@
       <span id="mode" class="pill"></span>
     </header>
 
+    <section class="display-ctl" id="display-ctl">
+      <div class="dc-title">Desktop display</div>
+      <div class="dc-row">
+        <span class="dc-label">View</span>
+        <div class="seg" id="view-seg">
+          <button type="button" data-view="week" class="active">Week</button>
+          <button type="button" data-view="day">Day</button>
+        </div>
+      </div>
+      <div class="dc-row">
+        <span class="dc-label">Show</span>
+        <div class="seg" id="show-seg">
+          <button type="button" data-show="calendar">Calendar</button>
+          <button type="button" data-show="todo">To-do</button>
+          <button type="button" data-show="both" class="active">Both</button>
+        </div>
+      </div>
+    </section>
+
     <form id="form">
       <input type="hidden" id="id" />
 

@@ -58,13 +58,17 @@ but worth doing as part of any real hardening pass.)
 
 ## Display views (data already supports these)
 
-The renderer is split (`computeWeek` → `render`) specifically so new views are
-just new render functions over the same item data:
+The renderer is split (a `render()` dispatcher over per-view functions sharing
+the same item data) specifically so new views are just new render functions:
 
-- **Month** view — big-picture overview grid.
-- **Day / agenda** view — single-day vertical timeline with full detail.
-- **View switcher** — cycle views, or pick per device (e.g. month on the wall
-  tablet, week on the desktop).
+- ✅ **Day view** — single-day, two columns (timed events | to-dos, incl. open
+  overdue ones). Shipped.
+- ✅ **View switcher** — synced view/mode controlled from the phone, plus
+  per-device `?view=`/`?show=`/`?chrome=` URL overrides (e.g. day on the iPad,
+  week on the desktop). Shipped.
+- **Month** view — big-picture overview grid. Still to do; slots into the same
+  `VIEWS` map in `display.js`.
+- **Agenda** view — a flat chronological list, good for narrow screens.
 
 ## Glanceability / prioritization
 

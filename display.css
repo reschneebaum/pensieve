@@ -53,7 +53,9 @@ body {
 .legend-dot { width: 11px; height: 11px; border-radius: 3px; }
 
 /* ── Grid scaffold ────────────────────────────────────────── */
-#grid { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+/* Generic mount point; the active view renderer fills it. The week view lays
+   itself out as a column (all-day row above the time grid). */
+.view-root { flex: 1; display: flex; flex-direction: column; min-height: 0; }
 
 .allday-row {
   display: grid;
@@ -115,6 +117,88 @@ body {
   position: absolute;
   left: 0; right: 0;
   border-top: 1px solid var(--line-soft);
+}
+
+/* ── Day view ─────────────────────────────────────────────── */
+/* Two columns on a wide screen: events timeline | to-do list. */
+.day-view {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(16px, 2vw, 36px);
+  min-height: 0;
+}
+.day-view.single-col { grid-template-columns: minmax(0, 720px); justify-content: center; }
+
+.day-events { display: flex; flex-direction: column; min-height: 0; }
+/* Single full-width day column on the timeline. */
+.days.days-1 { grid-template-columns: 1fr; }
+
+.day-allday {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.todo-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-left: 1px solid var(--line);
+  padding-left: clamp(14px, 1.5vw, 28px);
+}
+.todo-head {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+}
+.todo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  overflow-y: auto;
+  min-height: 0;
+}
+.todo-row {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 5px;
+  padding: 9px 12px;
+  font-size: 14px;
+}
+.todo-main { display: flex; align-items: center; gap: 6px; }
+.todo-main .prio { margin-left: 4px; }
+.todo-main .overdue-badge {
+  margin-left: auto;
+  padding-left: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--now);
+}
+.todo-notes {
+  font-size: 12.5px;
+  line-height: 1.35;
+  opacity: 0.8;
+  white-space: pre-wrap;
+}
+.todo-row.overdue { box-shadow: inset 0 0 0 1px var(--now); }
+.todo-divider {
+  margin: 12px 0 2px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--now);
+}
+.todo-empty { color: var(--text-dim); font-size: 13px; padding: 4px 0; }
+
+/* Below tablet width the two columns stack (display is meant for wide screens,
+   but don't let it break on a phone). */
+@media (max-width: 700px) {
+  .day-view, .day-view.single-col { grid-template-columns: 1fr; justify-content: stretch; }
+  .todo-panel { border-left: none; padding-left: 0; }
 }
 
 /* ── Event blocks ─────────────────────────────────────────── */
@@ -180,3 +264,10 @@ body {
   color: var(--text-dim);
   font-size: 15px;
 }
+
+/* ── Low-distraction mode (?chrome=off) ───────────────────────
+   For the desktop wallpaper: hide the header (date + color key + synced pill)
+   and to-do notes, leaving the calendar grid. The faint hour lines, hour
+   labels and day headers stay, so events keep their spatial context. */
+.chrome-off #topbar { display: none; }
+.chrome-off .todo-notes { display: none; }
