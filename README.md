@@ -11,7 +11,9 @@ its own. No alerts, no alarms — just always there when you look.
 - **Color** = category (Work / Health / Personal / …) — edit them in `config.js`.
 - **Priority** = the ▴ / ▴▴ / ▴▴▴ badge on each item.
 - **Status** = in-progress items get a dashed outline; done items go dim + struck through.
-- **View** = week. The renderer is split so month/day/agenda views can be added later.
+- **Views** = **week** (default) or a two-column **day** view (events | to-dos).
+  Switch from your phone, or pin a screen via URL — see
+  [Display views & modes](#display-views--modes).
 
 Everything is plain HTML/CSS/JS — **no build step, no npm.**
 
@@ -81,13 +83,43 @@ deployment private/unshared — same note as above.)
 ## 4. Make it your Mac desktop (Plash)
 
 1. Install **Plash** — free, from the Mac App Store (or <https://sindresorhus.com/plash>).
-2. Plash menu bar icon → **Add Website** → paste your `…/display.html` URL.
+2. Plash menu bar icon → **Add Website** → paste your `…/display.html` URL. For a
+   clean wallpaper, add params — e.g. `…/display.html?view=day&chrome=off` for a
+   distraction-free single-day view. See [Display views & modes](#display-views--modes).
 3. Recommended Plash settings:
    - **Reload interval:** off (the page updates itself via realtime + its own clock).
    - **Browsing mode:** off (it's display-only).
    - **Deactivate on battery / when app is fullscreen:** your call.
 
-The week view now lives on your desktop, behind your windows, always glanceable.
+The calendar now lives on your desktop, behind your windows, always glanceable.
+
+---
+
+## Display views & modes
+
+The display reads two things: a **synced setting** you control from the phone, and
+optional **URL params** that pin a single screen.
+
+**From the phone** (`entry.html` → *Desktop display* panel): pick the **View**
+(Week / Day) and what to **Show** (Calendar / To-do / Both). Tapping a toggle
+updates every display device in realtime. This is the easy, no-URL way.
+
+**Per-screen URL params** override the synced setting for *that* screen only —
+handy for a set-and-forget wallpaper, or running the iPad on day view while the
+Mac stays on week:
+
+| Param | Values | Effect |
+|---|---|---|
+| `view` | `week` (default) · `day` | Week grid, or the two-column day view (events \| to-dos). |
+| `show` | `both` (default) · `calendar` · `todo` | Which item types appear. |
+| `chrome` | (omit) · `off` | `chrome=off` = low-distraction: hides the header, color key and to-do notes, leaving just the calendar. Great for a desktop wallpaper. |
+
+Combine them: `…/display.html?view=day&chrome=off&show=calendar`. A screen with no
+params just follows whatever the phone last set.
+
+The **day view** shows today: timed events on a timeline (left) and your to-dos
+(right), including any open **overdue** to-dos carried forward. It's built for wide
+screens (desktop / iPad); on a phone the two columns stack.
 
 ---
 
@@ -117,7 +149,7 @@ a second or two. Tap any item in the "This week" list to edit or delete it.
 | `util.js` | Shared date/color helpers |
 | `display.html/.css/.js` | The desktop week view (read-only) |
 | `entry.html/.css/.js` | The iPhone add/edit app (PWA) |
-| `schema.sql` | One-time Supabase table + realtime setup |
+| `schema.sql` | One-time Supabase tables + realtime setup (`items` + display `settings`) |
 
 ## Ideas parked for later
 
