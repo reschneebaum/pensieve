@@ -1,0 +1,9 @@
+{
+  "name": "glance-cal",
+  "short_name": "glance-cal",
+  "description": "Add events and to-dos to your glance-cal calendar.",
+  "start_url": "entry.html",
+  "display": "standalone",
+  "background_color": "#0e1116",
+  "theme_color": "#0e1116"
+}

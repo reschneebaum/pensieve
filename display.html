@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>glance-cal</title>
+    <link rel="stylesheet" href="display.css" />
+  </head>
+  <body>
+    <header id="topbar">
+      <div id="title">
+        <span id="range">—</span>
+        <span id="mode" class="pill"></span>
+      </div>
+      <div id="legend"></div>
+    </header>
+
+    <main id="grid">
+      <div id="allday-row" class="allday-row"></div>
+      <div id="time-grid" class="time-grid">
+        <div id="hours" class="hours"></div>
+        <div id="days" class="days"></div>
+      </div>
+    </main>
+
+    <script type="module" src="display.js"></script>
+  </body>
+</html>

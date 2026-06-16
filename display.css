@@ -1,0 +1,182 @@
+:root {
+  --bg: #0e1116;
+  --bg-soft: #161b22;
+  --line: #232b36;
+  --line-soft: #1b212b;
+  --text: #e6edf3;
+  --text-dim: #8b97a7;
+  --now: #ff5c7c;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font: 15px/1.3 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+  overflow: hidden;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  padding: clamp(16px, 2vw, 40px);
+  gap: 14px;
+}
+
+/* ── Top bar ──────────────────────────────────────────────── */
+#topbar {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+#title { display: flex; align-items: baseline; gap: 12px; }
+#range { font-size: clamp(20px, 2.4vw, 34px); font-weight: 600; letter-spacing: 0.2px; }
+.pill {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  padding: 2px 9px;
+}
+#legend { display: flex; flex-wrap: wrap; gap: 14px; }
+.legend-item { display: flex; align-items: center; gap: 6px; color: var(--text-dim); font-size: 13px; }
+.legend-dot { width: 11px; height: 11px; border-radius: 3px; }
+
+/* ── Grid scaffold ────────────────────────────────────────── */
+#grid { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+
+.allday-row {
+  display: grid;
+  grid-template-columns: 56px repeat(7, 1fr);
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.allday-cell { display: flex; flex-direction: column; gap: 4px; min-height: 0; }
+.allday-spacer {}
+
+.time-grid { flex: 1; display: flex; min-height: 0; position: relative; }
+.hours {
+  width: 56px;
+  flex: none;
+  position: relative;
+}
+.hour-label {
+  position: absolute;
+  right: 8px;
+  transform: translateY(-50%);
+  font-size: 11px;
+  color: var(--text-dim);
+}
+.days {
+  flex: 1;
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  position: relative;
+}
+.day-col {
+  position: relative;
+  border-left: 1px solid var(--line-soft);
+}
+.day-col:first-child { border-left: none; }
+.day-col.today { background: rgba(79, 140, 255, 0.06); }
+
+.day-head {
+  position: absolute;
+  top: -26px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+.day-head .dnum {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 24px;
+  height: 24px;
+  border-radius: 999px;
+  font-weight: 600;
+  color: var(--text);
+}
+.day-col.today .day-head .dnum { background: var(--now); color: #fff; }
+
+.hour-line {
+  position: absolute;
+  left: 0; right: 0;
+  border-top: 1px solid var(--line-soft);
+}
+
+/* ── Event blocks ─────────────────────────────────────────── */
+.event {
+  position: absolute;
+  left: 3px; right: 3px;
+  border-radius: 7px;
+  padding: 4px 7px;
+  overflow: hidden;
+  background: var(--c);
+  border-left: 3px solid var(--c-strong);
+  color: #0b0d11;
+  font-size: 12.5px;
+  line-height: 1.2;
+}
+.event .ev-title { font-weight: 600; display: flex; gap: 5px; align-items: center; }
+.event .ev-time { opacity: 0.8; font-size: 11px; }
+.event .prio { margin-left: auto; font-size: 11px; letter-spacing: -1px; }
+
+/* All-day & to-do chips */
+.chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border-radius: 7px;
+  padding: 4px 8px;
+  font-size: 12.5px;
+  background: var(--c);
+  border-left: 3px solid var(--c-strong);
+  color: #0b0d11;
+}
+.chip .prio { margin-left: auto; letter-spacing: -1px; }
+
+/* Status styling, shared */
+.status-doing { outline: 2px dashed rgba(0,0,0,0.35); outline-offset: -2px; }
+.status-done { opacity: 0.45; }
+.status-done .ev-title, .status-done .chip-title { text-decoration: line-through; }
+.check { font-weight: 700; }
+
+/* ── "Now" line ───────────────────────────────────────────── */
+#now-line {
+  position: absolute;
+  left: 0; right: 0;
+  height: 0;
+  border-top: 2px solid var(--now);
+  z-index: 5;
+  pointer-events: none;
+}
+#now-line::before {
+  content: "";
+  position: absolute;
+  left: -4px; top: -4px;
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--now);
+}
+
+#empty {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: var(--text-dim);
+  font-size: 15px;
+}
