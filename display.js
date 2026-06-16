@@ -106,6 +106,80 @@ function escapeHtml(s) {
   );
 }
 
+// ── Shared timeline pieces (used by both week and day views) ─────────────
+// The left-hand gutter of hour labels.
+function hourGutter() {
+  const hours = document.createElement("div");
+  hours.className = "hours";
+  for (let h = HOUR_START; h <= HOUR_END; h++) {
+    const pct = ((h - HOUR_START) / (HOUR_END - HOUR_START)) * 100;
+    const lab = document.createElement("div");
+    lab.className = "hour-label";
+    lab.style.top = pct + "%";
+    lab.textContent = (h % 12 === 0 ? 12 : h % 12) + (h < 12 ? "a" : "p");
+    hours.appendChild(lab);
+  }
+  return hours;
+}
+
+// Build one day's timeline column: hour lines, the "now" line if it's today,
+// and the day's timed events. Returns { col, overflow } where overflow is the
+// items belonging to this day that don't sit on the grid (todos, all-day, and
+// off-grid events) — the caller decides where to put them.
+function dayColumn(day, items, today, { showHead = true } = {}) {
+  const col = document.createElement("div");
+  col.className = "day-col" + (sameDay(day, today) ? " today" : "");
+
+  if (showHead) {
+    const head = document.createElement("div");
+    head.className = "day-head";
+    head.innerHTML =
+      `${day.toLocaleDateString([], { weekday: "short" })} ` +
+      `<span class="dnum">${day.getDate()}</span>`;
+    col.appendChild(head);
+  }
+
+  for (let h = HOUR_START + 1; h < HOUR_END; h++) {
+    const line = document.createElement("div");
+    line.className = "hour-line";
+    line.style.top = ((h - HOUR_START) / (HOUR_END - HOUR_START)) * 100 + "%";
+    col.appendChild(line);
+  }
+
+  if (sameDay(day, today)) {
+    const mins = minutesOfDay(today) - HOUR_START * 60;
+    if (mins >= 0 && mins <= TOTAL_MIN) {
+      const now = document.createElement("div");
+      now.id = "now-line";
+      now.style.top = (mins / TOTAL_MIN) * 100 + "%";
+      col.appendChild(now);
+    }
+  }
+
+  const overflow = [];
+  const dayItems = items.filter((it) => sameDay(new Date(it.start), day));
+  for (const it of dayItems) {
+    const start = new Date(it.start);
+    const end = it.end ? new Date(it.end) : null;
+    const timed = it.type === "event" && !it.all_day;
+    const pos = timed ? timedPosition(start, end) : null;
+    if (pos) col.appendChild(eventEl(it, pos));
+    else overflow.push(it); // todos, all-day, off-grid events
+  }
+  return { col, overflow };
+}
+
+// Highest priority first; done items sink to the bottom.
+function sortTodos(arr) {
+  return arr
+    .slice()
+    .sort(
+      (a, b) =>
+        (a.status === "done") - (b.status === "done") ||
+        (b.priority || 0) - (a.priority || 0)
+    );
+}
+
 // ── Week view ──────────────────────────────────────────────────────────────
 function renderWeek(root, items) {
   const weekStart = startOfWeek(new Date());
@@ -117,72 +191,33 @@ function renderWeek(root, items) {
     " – " +
     addDays(weekStart, 6).toLocaleDateString([], { month: "long", day: "numeric", year: "numeric" });
 
-  root.innerHTML =
-    '<div id="allday-row" class="allday-row"><div class="allday-spacer"></div></div>' +
-    '<div id="time-grid" class="time-grid">' +
-    '<div id="hours" class="hours"></div>' +
-    '<div id="days" class="days"></div>' +
-    "</div>";
+  root.innerHTML = "";
 
-  const hours = root.querySelector("#hours");
-  const days$ = root.querySelector("#days");
-  const allday = root.querySelector("#allday-row");
+  const allday = document.createElement("div");
+  allday.id = "allday-row";
+  allday.className = "allday-row";
+  allday.innerHTML = '<div class="allday-spacer"></div>';
 
-  // Hour labels down the left gutter.
-  for (let h = HOUR_START; h <= HOUR_END; h++) {
-    const pct = ((h - HOUR_START) / (HOUR_END - HOUR_START)) * 100;
-    const lab = document.createElement("div");
-    lab.className = "hour-label";
-    lab.style.top = pct + "%";
-    lab.textContent = (h % 12 === 0 ? 12 : h % 12) + (h < 12 ? "a" : "p");
-    hours.appendChild(lab);
-  }
+  const grid = document.createElement("div");
+  grid.id = "time-grid";
+  grid.className = "time-grid";
+  grid.appendChild(hourGutter());
+
+  const days$ = document.createElement("div");
+  days$.className = "days";
 
   weekDays.forEach((day) => {
-    const col = document.createElement("div");
-    col.className = "day-col" + (sameDay(day, today) ? " today" : "");
-
-    const head = document.createElement("div");
-    head.className = "day-head";
-    head.innerHTML =
-      `${day.toLocaleDateString([], { weekday: "short" })} ` +
-      `<span class="dnum">${day.getDate()}</span>`;
-    col.appendChild(head);
-
-    for (let h = HOUR_START + 1; h < HOUR_END; h++) {
-      const line = document.createElement("div");
-      line.className = "hour-line";
-      line.style.top = ((h - HOUR_START) / (HOUR_END - HOUR_START)) * 100 + "%";
-      col.appendChild(line);
-    }
-
-    // "Now" line on today's column.
-    if (sameDay(day, today)) {
-      const mins = minutesOfDay(today) - HOUR_START * 60;
-      if (mins >= 0 && mins <= TOTAL_MIN) {
-        const now = document.createElement("div");
-        now.id = "now-line";
-        now.style.top = (mins / TOTAL_MIN) * 100 + "%";
-        col.appendChild(now);
-      }
-    }
-
-    const alldayCell = document.createElement("div");
-    alldayCell.className = "allday-cell";
-
-    const dayItems = items.filter((it) => sameDay(new Date(it.start), day));
-    for (const it of dayItems) {
-      const start = new Date(it.start);
-      const end = it.end ? new Date(it.end) : null;
-      const timed = it.type === "event" && !it.all_day;
-      const pos = timed ? timedPosition(start, end) : null;
-      if (pos) col.appendChild(eventEl(it, pos));
-      else alldayCell.appendChild(chipEl(it)); // todos, all-day, off-grid events
-    }
-
+    const { col, overflow } = dayColumn(day, items, today);
     days$.appendChild(col);
-    allday.appendChild(alldayCell);
+
+    const cell = document.createElement("div");
+    cell.className = "allday-cell";
+    overflow.forEach((it) => cell.appendChild(chipEl(it)));
+    allday.appendChild(cell);
   });
+
+  grid.appendChild(days$);
+  root.append(allday, grid);
 
   const hasAny = items.some((it) =>
     weekDays.some((d) => sameDay(new Date(it.start), d))
@@ -191,22 +226,145 @@ function renderWeek(root, items) {
     const empty = document.createElement("div");
     empty.id = "empty";
     empty.textContent = "Nothing scheduled this week — add something from your phone.";
-    root.querySelector("#time-grid").appendChild(empty);
+    grid.appendChild(empty);
   }
 }
 
+// ── Day view ─────────────────────────────────────────────────────────────
+// Two columns on a wide screen: today's timed events on the left, the to-do
+// list on the right. The "show" mode collapses to a single column.
+function renderDay(root, items) {
+  const today = new Date();
+  $("#range").textContent = today.toLocaleDateString([], {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+  });
+
+  const showEvents = active.show !== "todo";
+  const showTodos = active.show !== "calendar";
+
+  root.innerHTML = "";
+  const layout = document.createElement("div");
+  layout.className =
+    "day-view" + (showEvents && showTodos ? "" : " single-col");
+  if (showEvents) layout.appendChild(dayEventsColumn(items, today));
+  if (showTodos) layout.appendChild(todoPanel(items, today));
+  root.appendChild(layout);
+}
+
+function dayEventsColumn(items, today) {
+  const section = document.createElement("section");
+  section.className = "day-events";
+
+  const { col, overflow } = dayColumn(today, items, today, { showHead: false });
+
+  // All-day / off-grid events sit in a strip above the timeline. (Todos for
+  // today live in the to-do panel, not here.)
+  const allday = overflow.filter((it) => it.type !== "todo");
+  if (allday.length) {
+    const strip = document.createElement("div");
+    strip.className = "day-allday";
+    allday.forEach((it) => strip.appendChild(chipEl(it)));
+    section.appendChild(strip);
+  }
+
+  const grid = document.createElement("div");
+  grid.className = "time-grid";
+  grid.appendChild(hourGutter());
+  const days$ = document.createElement("div");
+  days$.className = "days days-1";
+  days$.appendChild(col);
+  grid.appendChild(days$);
+  section.appendChild(grid);
+
+  return section;
+}
+
+function todoPanel(items, today) {
+  const startOfToday = new Date(today);
+  startOfToday.setHours(0, 0, 0, 0);
+
+  const todos = items.filter((it) => it.type === "todo");
+  const todays = sortTodos(todos.filter((it) => sameDay(new Date(it.start), today)));
+  const overdue = sortTodos(
+    todos.filter((it) => new Date(it.start) < startOfToday && it.status !== "done")
+  );
+
+  const panel = document.createElement("section");
+  panel.className = "todo-panel";
+  panel.innerHTML = '<div class="todo-head">To-do</div>';
+
+  const list = document.createElement("div");
+  list.className = "todo-list";
+
+  todays.forEach((it) => list.appendChild(todoRow(it)));
+
+  if (overdue.length) {
+    const div = document.createElement("div");
+    div.className = "todo-divider";
+    div.textContent = "Overdue";
+    list.appendChild(div);
+    overdue.forEach((it) => list.appendChild(todoRow(it, { overdue: true })));
+  }
+
+  if (!todays.length && !overdue.length) {
+    const empty = document.createElement("div");
+    empty.className = "todo-empty";
+    empty.textContent = "Nothing to do today.";
+    list.appendChild(empty);
+  }
+
+  panel.appendChild(list);
+  return panel;
+}
+
+function todoRow(item, { overdue = false } = {}) {
+  const el = chipEl(item);
+  el.classList.add("todo-row");
+  if (overdue) {
+    el.classList.add("overdue");
+    const badge = document.createElement("span");
+    badge.className = "overdue-badge";
+    badge.textContent = new Date(item.start).toLocaleDateString([], {
+      month: "short",
+      day: "numeric",
+    });
+    el.appendChild(badge);
+  }
+  return el;
+}
+
 // ── Dispatcher ───────────────────────────────────────────────────────────
-// Map of view name → renderer. Day / month / agenda views slot in here.
+// Map of view name → renderer. Month / agenda views slot in here later.
 const VIEWS = {
   week: renderWeek,
+  day: renderDay,
 };
+
+const ALLOWED_VIEWS = ["week", "day"];
+const ALLOWED_SHOW = ["calendar", "todo", "both"];
+
+// Optional per-device override via URL: ?view=day&show=todo. Lets one screen
+// pin itself regardless of the synced setting (e.g. iPad on day, Mac on week).
+// Invalid/absent params are ignored, so the synced setting wins by default.
+function urlOverrides() {
+  const p = new URLSearchParams(location.search);
+  const o = {};
+  if (ALLOWED_VIEWS.includes(p.get("view"))) o.view = p.get("view");
+  if (ALLOWED_SHOW.includes(p.get("show"))) o.show = p.get("show");
+  return o;
+}
 
 let allItems = [];
 let settings = { ...DEFAULT_SETTINGS };
+let override = {};
+let active = { ...DEFAULT_SETTINGS };
 
 function render() {
-  const renderer = VIEWS[settings.view] || renderWeek;
-  renderer($("#view-root"), byMode(allItems, settings.show));
+  active = { ...settings, ...override };
+  const renderer = VIEWS[active.view] || renderWeek;
+  renderer($("#view-root"), byMode(allItems, active.show));
 }
 
 async function refresh() {
@@ -220,6 +378,7 @@ async function refresh() {
 
 async function main() {
   buildLegend();
+  override = urlOverrides();
   settings = await getSettings();
   await refresh();
   await onChange(refresh);

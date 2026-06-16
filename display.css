@@ -119,6 +119,74 @@ body {
   border-top: 1px solid var(--line-soft);
 }
 
+/* ── Day view ─────────────────────────────────────────────── */
+/* Two columns on a wide screen: events timeline | to-do list. */
+.day-view {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr minmax(240px, 340px);
+  gap: clamp(16px, 2vw, 36px);
+  min-height: 0;
+}
+.day-view.single-col { grid-template-columns: minmax(0, 720px); justify-content: center; }
+
+.day-events { display: flex; flex-direction: column; min-height: 0; }
+/* Single full-width day column on the timeline. */
+.days.days-1 { grid-template-columns: 1fr; }
+
+.day-allday {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.todo-panel {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-left: 1px solid var(--line);
+  padding-left: clamp(14px, 1.5vw, 28px);
+}
+.todo-head {
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+}
+.todo-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  overflow-y: auto;
+  min-height: 0;
+}
+.todo-row .prio { margin-left: 4px; }
+.todo-row .overdue-badge {
+  margin-left: auto;
+  padding-left: 8px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--now);
+}
+.todo-row.overdue { box-shadow: inset 0 0 0 1px var(--now); }
+.todo-divider {
+  margin: 12px 0 2px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--now);
+}
+.todo-empty { color: var(--text-dim); font-size: 13px; padding: 4px 0; }
+
+/* Below tablet width the two columns stack (display is meant for wide screens,
+   but don't let it break on a phone). */
+@media (max-width: 700px) {
+  .day-view, .day-view.single-col { grid-template-columns: 1fr; justify-content: stretch; }
+  .todo-panel { border-left: none; padding-left: 0; }
+}
+
 /* ── Event blocks ─────────────────────────────────────────── */
 .event {
   position: absolute;
