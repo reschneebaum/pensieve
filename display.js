@@ -320,17 +320,35 @@ function todoPanel(items, today) {
 }
 
 function todoRow(item, { overdue = false } = {}) {
-  const el = chipEl(item);
-  el.classList.add("todo-row");
+  const cat = categoryById(item.category);
+  const el = document.createElement("div");
+  el.className = `chip todo-row ${statusClass(item)}` + (overdue ? " overdue" : "");
+  el.style.setProperty("--c", withAlpha(cat.color, 0.85));
+  el.style.setProperty("--c-strong", cat.color);
+
+  const main = document.createElement("div");
+  main.className = "todo-main";
+  const box = item.status === "done" ? "☑ " : "☐ ";
+  main.innerHTML =
+    `<span class="chip-title">${box}${escapeHtml(item.title)}</span>` +
+    `<span class="prio">${priorityIcon(item.priority)}</span>`;
   if (overdue) {
-    el.classList.add("overdue");
     const badge = document.createElement("span");
     badge.className = "overdue-badge";
     badge.textContent = new Date(item.start).toLocaleDateString([], {
       month: "short",
       day: "numeric",
     });
-    el.appendChild(badge);
+    main.appendChild(badge);
+  }
+  el.appendChild(main);
+
+  const notes = (item.notes || "").trim();
+  if (notes) {
+    const n = document.createElement("div");
+    n.className = "todo-notes";
+    n.textContent = notes;
+    el.appendChild(n);
   }
   return el;
 }
