@@ -339,6 +339,15 @@ function todoRow(item, { overdue = false } = {}) {
   title.textContent = (item.status === "done" ? "☑ " : "☐ ") + item.title;
   main.appendChild(title);
 
+  // Priority sits just left of the due date, which is pushed to the far right.
+  const icon = priorityIcon(item.priority);
+  if (icon) {
+    const prio = document.createElement("span");
+    prio.className = "prio";
+    prio.textContent = icon;
+    main.appendChild(prio);
+  }
+
   if (overdue) {
     const badge = document.createElement("span");
     badge.className = "overdue-badge";
@@ -347,14 +356,6 @@ function todoRow(item, { overdue = false } = {}) {
       day: "numeric",
     });
     main.appendChild(badge);
-  }
-
-  const icon = priorityIcon(item.priority);
-  if (icon) {
-    const prio = document.createElement("span");
-    prio.className = "prio";
-    prio.textContent = icon;
-    main.appendChild(prio);
   }
   el.appendChild(main);
 

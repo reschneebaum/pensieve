@@ -167,12 +167,12 @@ body {
   flex-direction: column;
   align-items: stretch;
   gap: 6px;
-  padding: 11px 14px;
+  padding: 15px 14px;
   font-size: 15px;
 }
-/* Title takes the left; due date + priority group to the right. */
+/* Title hard-left; priority then due date pushed to the far right. */
 .todo-main { display: flex; align-items: center; gap: 8px; }
-.todo-main .chip-title { margin-right: auto; }
+.todo-main .chip-title { margin-right: auto; font-size: 16.5px; font-weight: 700; }
 .todo-main .prio { font-size: 15px; font-weight: 800; letter-spacing: -0.5px; }
 .todo-main .overdue-badge {
   font-size: 12px;
