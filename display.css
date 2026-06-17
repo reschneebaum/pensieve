@@ -187,7 +187,10 @@ body {
   opacity: 0.82;
   white-space: pre-wrap;
 }
-.todo-row.overdue { box-shadow: inset 0 0 0 1.5px var(--overdue); }
+/* Uniform red border (flush on all four edges) rather than an inset ring, which
+   would be clipped inside the 3px category left border. Category is still shown
+   by the pastel fill. Scoped under .todo-panel to win over the later .chip rule. */
+.todo-panel .todo-row.overdue { border: 1.5px solid var(--overdue); }
 .todo-divider {
   margin: 14px 0 2px;
   font-size: 11.5px;
