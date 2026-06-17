@@ -24,9 +24,19 @@ const HOUR_START = config.dayStartHour;
 const HOUR_END = config.dayEndHour;
 const TOTAL_MIN = (HOUR_END - HOUR_START) * 60;
 
-function withAlpha(hex, a) {
+// Soft pastel fill: blend the category color toward white and make it slightly
+// translucent, so blocks read as gentle tints behind dark text rather than
+// saturated slabs. The solid color is kept for the left-border accent.
+function softFill(hex, t = 0.5, a = 0.9) {
   const n = parseInt(hex.slice(1), 16);
-  return `rgba(${(n >> 16) & 255}, ${(n >> 8) & 255}, ${n & 255}, ${a})`;
+  const mix = (c) => Math.round(c + (255 - c) * t);
+  return `rgba(${mix((n >> 16) & 255)}, ${mix((n >> 8) & 255)}, ${mix(n & 255)}, ${a})`;
+}
+
+function setCatVars(el, item) {
+  const cat = categoryById(item.category);
+  el.style.setProperty("--c", softFill(cat.color));
+  el.style.setProperty("--c-strong", cat.color);
 }
 
 function buildLegend() {
@@ -70,11 +80,9 @@ function statusClass(item) {
 }
 
 function eventEl(item, pos) {
-  const cat = categoryById(item.category);
   const el = document.createElement("div");
   el.className = `event ${statusClass(item)}`;
-  el.style.setProperty("--c", withAlpha(cat.color, 0.85));
-  el.style.setProperty("--c-strong", cat.color);
+  setCatVars(el, item);
   el.style.top = pos.top + "%";
   el.style.height = pos.height + "%";
   const start = new Date(item.start);
@@ -88,11 +96,9 @@ function eventEl(item, pos) {
 }
 
 function chipEl(item) {
-  const cat = categoryById(item.category);
   const el = document.createElement("div");
   el.className = `chip ${statusClass(item)}`;
-  el.style.setProperty("--c", withAlpha(cat.color, 0.85));
-  el.style.setProperty("--c-strong", cat.color);
+  setCatVars(el, item);
   const box = item.type === "todo" ? (item.status === "done" ? "☑ " : "☐ ") : "";
   el.innerHTML =
     `<span class="chip-title">${box}${escapeHtml(item.title)}</span>` +
@@ -320,18 +326,28 @@ function todoPanel(items, today) {
 }
 
 function todoRow(item, { overdue = false } = {}) {
-  const cat = categoryById(item.category);
   const el = document.createElement("div");
   el.className = `chip todo-row ${statusClass(item)}` + (overdue ? " overdue" : "");
-  el.style.setProperty("--c", withAlpha(cat.color, 0.85));
-  el.style.setProperty("--c-strong", cat.color);
+  setCatVars(el, item);
 
+  // Title on the left; due date (overdue only) + priority grouped on the right.
   const main = document.createElement("div");
   main.className = "todo-main";
-  const box = item.status === "done" ? "☑ " : "☐ ";
-  main.innerHTML =
-    `<span class="chip-title">${box}${escapeHtml(item.title)}</span>` +
-    `<span class="prio">${priorityIcon(item.priority)}</span>`;
+
+  const title = document.createElement("span");
+  title.className = "chip-title";
+  title.textContent = (item.status === "done" ? "☑ " : "☐ ") + item.title;
+  main.appendChild(title);
+
+  // Priority sits just left of the due date, which is pushed to the far right.
+  const icon = priorityIcon(item.priority);
+  if (icon) {
+    const prio = document.createElement("span");
+    prio.className = "prio";
+    prio.textContent = icon;
+    main.appendChild(prio);
+  }
+
   if (overdue) {
     const badge = document.createElement("span");
     badge.className = "overdue-badge";

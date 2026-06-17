@@ -78,6 +78,10 @@ the same item data) specifically so new views are just new render functions:
 - **Per-status or per-priority view modes** — e.g. a "what's urgent" lens.
 - **Custom icons per category** — beyond color, give each category a glyph for
   even faster recognition.
+- **Custom categories** - sort of like tags? user can add and delete categories + associate a category with a color (+ optional icon per above)
+- hide completed items by default (but make them visible with a toggle in the mobile entry app)
+- if possible: shorten displayed calendar time (say 8am - 6pm) with 'morning' and 'evening' buckets as bookends? allow user to select morning or evening (in addition to/instead of a time range or 'all day')?
+- hide / show hidden?
 
 ## Data & sync
 
@@ -85,6 +89,8 @@ the same item data) specifically so new views are just new render functions:
   one-off).
 - **Google Calendar import** — one-way pull so existing events show up.
 - **Multiple calendars / contexts** — toggle work vs. personal, etc.
+- to-do items don't need a start date/time by default, just optional due date
+- todos with no due date are listed below dated items
 
 ## Polish
 
@@ -93,3 +99,12 @@ the same item data) specifically so new views are just new render functions:
 - **PWA icons** — proper app icons for the iPhone home-screen install.
 - **Offline resilience** — cache last-known data so the display survives a
   network blip.
+
+
+# UI updates
+- larger font size; larger + bolder priority symbols
+- title text left aligned, due date + priority symbol right aligned
+- lighter (more pastel-ish?) / slightly translucent(?) colors
+- more padding around item text and between items
+- bright red border is kind of hard to look at, especially against bright background colors; make darker? make sure text is readable against the background
+
