@@ -14,7 +14,7 @@ import {
   getSettings, onSettingsChange, DEFAULT_SETTINGS,
 } from "./store.js";
 import {
-  startOfWeek, addDays, sameDay, categoryById, priorityIcon,
+  startOfWeek, addDays, sameDay, categoryById,
   fmtTime, minutesOfDay,
 } from "./util.js";
 
@@ -24,10 +24,14 @@ const HOUR_START = config.dayStartHour;
 const HOUR_END = config.dayEndHour;
 const TOTAL_MIN = (HOUR_END - HOUR_START) * 60;
 
-// Soft pastel fill: blend the category color toward white and make it slightly
-// translucent, so blocks read as gentle tints behind dark text rather than
-// saturated slabs. The solid color is kept for the left-border accent.
-function softFill(hex, t = 0.5, a = 0.9) {
+// Soft fill: blend the category color toward white for a gentle tint behind
+// dark text, then keep the alpha below 1 so the dark desktop seeps through and
+// mutes it (rather than a bright saturated slab). Higher priority mixes in less
+// white, so each priority step reads a touch deeper — priority is shown by
+// color depth now instead of ▴ triangles. The solid color is the border accent.
+function softFill(hex, priority = 0) {
+  const t = 0.5 - Math.min(priority, 3) * 0.1; // 0.50, 0.40, 0.30, 0.20
+  const a = 0.78; // let the background show through a bit
   const n = parseInt(hex.slice(1), 16);
   const mix = (c) => Math.round(c + (255 - c) * t);
   return `rgba(${mix((n >> 16) & 255)}, ${mix((n >> 8) & 255)}, ${mix(n & 255)}, ${a})`;
@@ -35,7 +39,7 @@ function softFill(hex, t = 0.5, a = 0.9) {
 
 function setCatVars(el, item) {
   const cat = categoryById(item.category);
-  el.style.setProperty("--c", softFill(cat.color));
+  el.style.setProperty("--c", softFill(cat.color, item.priority));
   el.style.setProperty("--c-strong", cat.color);
 }
 
@@ -72,11 +76,7 @@ function timedPosition(start, end) {
 }
 
 function statusClass(item) {
-  return item.status === "done"
-    ? "status-done"
-    : item.status === "doing"
-    ? "status-doing"
-    : "";
+  return item.status === "done" ? "status-done" : "";
 }
 
 function eventEl(item, pos) {
@@ -89,8 +89,7 @@ function eventEl(item, pos) {
   el.innerHTML =
     `<div class="ev-title">` +
     `${item.status === "done" ? '<span class="check">✓</span> ' : ""}` +
-    `<span>${escapeHtml(item.title)}</span>` +
-    `<span class="prio">${priorityIcon(item.priority)}</span></div>` +
+    `<span>${escapeHtml(item.title)}</span></div>` +
     `<div class="ev-time">${fmtTime(start)}</div>`;
   return el;
 }
@@ -99,10 +98,7 @@ function chipEl(item) {
   const el = document.createElement("div");
   el.className = `chip ${statusClass(item)}`;
   setCatVars(el, item);
-  const box = item.type === "todo" ? (item.status === "done" ? "☑ " : "☐ ") : "";
-  el.innerHTML =
-    `<span class="chip-title">${box}${escapeHtml(item.title)}</span>` +
-    `<span class="prio">${priorityIcon(item.priority)}</span>`;
+  el.innerHTML = `<span class="chip-title">${escapeHtml(item.title)}</span>`;
   return el;
 }
 
@@ -175,14 +171,16 @@ function dayColumn(day, items, today, { showHead = true } = {}) {
   return { col, overflow };
 }
 
-// Highest priority first; done items sink to the bottom.
+// Highest priority first. Within a priority, dated todos come before undated
+// ones (earliest due first); undated todos sink to the bottom.
 function sortTodos(arr) {
+  const dateKey = (it) => (it.start ? +new Date(it.start) : Infinity);
   return arr
     .slice()
     .sort(
       (a, b) =>
-        (a.status === "done") - (b.status === "done") ||
-        (b.priority || 0) - (a.priority || 0)
+        (b.priority || 0) - (a.priority || 0) ||
+        dateKey(a) - dateKey(b)
     );
 }
 
@@ -291,11 +289,9 @@ function todoPanel(items, today) {
   const startOfToday = new Date(today);
   startOfToday.setHours(0, 0, 0, 0);
 
-  const todos = items.filter((it) => it.type === "todo");
-  const todays = sortTodos(todos.filter((it) => sameDay(new Date(it.start), today)));
-  const overdue = sortTodos(
-    todos.filter((it) => new Date(it.start) < startOfToday && it.status !== "done")
-  );
+  // Show every open to-do, not just today's — ordered by priority. (Done items
+  // are already filtered out upstream in render().)
+  const open = sortTodos(items.filter((it) => it.type === "todo"));
 
   const panel = document.createElement("section");
   panel.className = "todo-panel";
@@ -304,20 +300,12 @@ function todoPanel(items, today) {
   const list = document.createElement("div");
   list.className = "todo-list";
 
-  todays.forEach((it) => list.appendChild(todoRow(it)));
-
-  if (overdue.length) {
-    const div = document.createElement("div");
-    div.className = "todo-divider";
-    div.textContent = "Overdue";
-    list.appendChild(div);
-    overdue.forEach((it) => list.appendChild(todoRow(it, { overdue: true })));
-  }
-
-  if (!todays.length && !overdue.length) {
+  if (open.length) {
+    open.forEach((it) => list.appendChild(todoRow(it, startOfToday)));
+  } else {
     const empty = document.createElement("div");
     empty.className = "todo-empty";
-    empty.textContent = "Nothing to do today.";
+    empty.textContent = "Nothing to do.";
     list.appendChild(empty);
   }
 
@@ -325,33 +313,27 @@ function todoPanel(items, today) {
   return panel;
 }
 
-function todoRow(item, { overdue = false } = {}) {
+function todoRow(item, startOfToday) {
+  const due = item.start ? new Date(item.start) : null;
+  const overdue = due && due < startOfToday;
+
   const el = document.createElement("div");
   el.className = `chip todo-row ${statusClass(item)}` + (overdue ? " overdue" : "");
   setCatVars(el, item);
 
-  // Title on the left; due date (overdue only) + priority grouped on the right.
+  // Title on the left; due date (when set) pushed to the far right.
   const main = document.createElement("div");
   main.className = "todo-main";
 
   const title = document.createElement("span");
   title.className = "chip-title";
-  title.textContent = (item.status === "done" ? "☑ " : "☐ ") + item.title;
+  title.textContent = item.title;
   main.appendChild(title);
 
-  // Priority sits just left of the due date, which is pushed to the far right.
-  const icon = priorityIcon(item.priority);
-  if (icon) {
-    const prio = document.createElement("span");
-    prio.className = "prio";
-    prio.textContent = icon;
-    main.appendChild(prio);
-  }
-
-  if (overdue) {
+  if (due) {
     const badge = document.createElement("span");
-    badge.className = "overdue-badge";
-    badge.textContent = new Date(item.start).toLocaleDateString([], {
+    badge.className = "due-badge" + (overdue ? " overdue" : "");
+    badge.textContent = due.toLocaleDateString([], {
       month: "short",
       day: "numeric",
     });
@@ -398,7 +380,11 @@ let active = { ...DEFAULT_SETTINGS };
 function render() {
   active = { ...settings, ...override };
   const renderer = VIEWS[active.view] || renderWeek;
-  renderer($("#view-root"), byMode(allItems, active.show));
+  // Completed to-dos are hidden on the display (check them off from the phone).
+  const visible = allItems.filter(
+    (it) => !(it.type === "todo" && it.status === "done")
+  );
+  renderer($("#view-root"), byMode(visible, active.show));
 }
 
 async function refresh() {

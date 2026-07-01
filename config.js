@@ -45,8 +45,9 @@ export const PRIORITIES = [
   { value: 3, label: "High", icon: "▴▴▴" },
 ];
 
+// Status is binary: either done or not. (An earlier "doing"/in-progress state
+// was dropped — see IDEAS.md. Legacy "doing" rows are treated as not-done.)
 export const STATUSES = [
   { value: "todo", label: "To do" },
-  { value: "doing", label: "In progress" },
   { value: "done", label: "Done" },
 ];

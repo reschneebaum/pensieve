@@ -54,6 +54,17 @@ input, select, textarea {
 input:focus, select:focus, textarea:focus { outline: 2px solid var(--accent); border-color: transparent; }
 textarea { resize: vertical; }
 
+/* Checkboxes opt out of the full-width text-input styling above. */
+input[type="checkbox"] {
+  width: 22px; height: 22px; flex: none; padding: 0;
+  -webkit-appearance: auto; appearance: auto;
+  accent-color: var(--accent);
+}
+
+/* "Done" toggle sits inline next to Priority. */
+.check-field { display: flex; align-items: center; gap: 8px; align-self: flex-end; padding-bottom: 11px; }
+.check-field span { font-size: 14px; color: var(--text); }
+
 /* Segmented event/todo toggle */
 .seg { display: flex; background: var(--card); border: 1px solid var(--line); border-radius: 10px; padding: 3px; }
 .seg button {
@@ -91,10 +102,10 @@ textarea { resize: vertical; }
   border-left: 4px solid var(--c, var(--line));
   border-radius: 10px; padding: 10px 12px;
 }
-.li .li-main { flex: 1; min-width: 0; }
+.li .li-check { margin: 0; }
+.li .li-main { flex: 1; min-width: 0; cursor: pointer; }
 .li .li-title { font-weight: 600; }
 .li .li-title.done { text-decoration: line-through; color: var(--dim); }
 .li .li-sub { font-size: 12px; color: var(--dim); }
-.li .li-prio { color: var(--dim); font-size: 13px; }
 .li button { background: transparent; border: none; color: var(--dim); font-size: 18px; padding: 4px 8px; }
 .empty { color: var(--dim); font-size: 14px; }

@@ -7,7 +7,7 @@ import {
   getItems, upsertItem, deleteItem, onChange, MODE,
   getSettings, setSettings, onSettingsChange,
 } from "./store.js";
-import { uid, toLocalInput, toDateInput, startOfWeek, addDays, sameDay, categoryById, priorityIcon, fmtTime } from "./util.js";
+import { uid, toLocalInput, toDateInput, categoryById, fmtTime } from "./util.js";
 
 const $ = (s) => document.querySelector(s);
 let currentType = "event";
@@ -39,6 +39,7 @@ function setType(type) {
   );
   $("#when-event").hidden = type !== "event";
   $("#when-todo").hidden = type !== "todo";
+  $("#done-field").hidden = type !== "todo";
   $("#start").required = type === "event";
 }
 
@@ -54,7 +55,8 @@ function resetForm() {
   const end = new Date(now);
   end.setHours(end.getHours() + 1);
   $("#end").value = toLocalInput(end);
-  $("#due").value = toDateInput(new Date());
+  $("#due").value = ""; // due date is optional; leave empty by default
+  $("#done").checked = false;
   $("#delete").hidden = true;
   $("#save").textContent = "Add to calendar";
 }
@@ -65,13 +67,13 @@ function loadIntoForm(item) {
   setType(item.type);
   selectCategory(item.category);
   $("#priority").value = String(item.priority ?? 0);
-  $("#status").value = item.status || "todo";
+  $("#done").checked = item.status === "done";
   $("#notes").value = item.notes || "";
   if (item.type === "event") {
     $("#start").value = toLocalInput(new Date(item.start));
     $("#end").value = item.end ? toLocalInput(new Date(item.end)) : "";
   } else {
-    $("#due").value = toDateInput(new Date(item.start));
+    $("#due").value = item.start ? toDateInput(new Date(item.start)) : "";
   }
   $("#delete").hidden = false;
   $("#save").textContent = "Save changes";
@@ -88,9 +90,9 @@ async function onSubmit(e) {
     end = $("#end").value ? new Date($("#end").value).toISOString() : null;
     all_day = false;
   } else {
-    // To-do: anchor to noon of the due date so it lands on the right day.
-    const due = new Date($("#due").value + "T12:00");
-    start = due.toISOString();
+    // To-do: due date is optional. When set, anchor to noon of that date so it
+    // lands on the right day; when blank, leave undated (start = null).
+    start = $("#due").value ? new Date($("#due").value + "T12:00").toISOString() : null;
     end = null;
     all_day = true;
   }
@@ -104,7 +106,7 @@ async function onSubmit(e) {
     end,
     all_day,
     priority: Number($("#priority").value),
-    status: $("#status").value,
+    status: $("#done").checked ? "done" : "todo",
     notes: $("#notes").value.trim(),
   };
 
@@ -118,35 +120,47 @@ async function renderList() {
   let items = [];
   try { items = await getItems(); } catch (e) { console.error(e); }
 
-  const weekStart = startOfWeek(new Date());
-  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(weekStart, i));
-  const inWeek = items
-    .filter((it) => weekDays.some((d) => sameDay(new Date(it.start), d)))
-    .sort((a, b) => new Date(a.start) - new Date(b.start));
+  // Show every item (not just this week) so anything can be checked off or
+  // deleted. Open items first, done sink to the bottom; within each, ordered by
+  // date with undated todos last.
+  const dateKey = (it) => (it.start ? +new Date(it.start) : Infinity);
+  const sorted = items.slice().sort(
+    (a, b) =>
+      (a.status === "done") - (b.status === "done") ||
+      dateKey(a) - dateKey(b)
+  );
 
-  if (!inWeek.length) {
-    ul.innerHTML = '<li class="empty">Nothing this week yet.</li>';
+  if (!sorted.length) {
+    ul.innerHTML = '<li class="empty">Nothing yet — add something above.</li>';
     return;
   }
 
   ul.innerHTML = "";
-  for (const it of inWeek) {
+  for (const it of sorted) {
     const cat = categoryById(it.category);
-    const d = new Date(it.start);
+    const d = it.start ? new Date(it.start) : null;
     const when =
       it.type === "event"
-        ? `${d.toLocaleDateString([], { weekday: "short" })} ${fmtTime(d)}`
-        : `Due ${d.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" })}`;
+        ? (d ? `${d.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" })} ${fmtTime(d)}` : "")
+        : (d ? `Due ${d.toLocaleDateString([], { weekday: "short", month: "short", day: "numeric" })}` : "No due date");
 
     const li = document.createElement("li");
     li.className = "li";
     li.style.setProperty("--c", cat.color);
     li.innerHTML =
+      `<input type="checkbox" class="li-check" aria-label="mark done" ${it.status === "done" ? "checked" : ""} />` +
       `<div class="li-main">` +
       `<div class="li-title ${it.status === "done" ? "done" : ""}">${escapeHtml(it.title)}</div>` +
-      `<div class="li-sub">${cat.name} · ${when}</div></div>` +
-      `<span class="li-prio">${priorityIcon(it.priority)}</span>` +
+      `<div class="li-sub">${escapeHtml(cat.name)}${when ? " · " + when : ""}</div></div>` +
       `<button type="button" aria-label="edit">✎</button>`;
+
+    // Inline check-off: toggle done without opening the editor.
+    li.querySelector(".li-check").addEventListener("click", async (e) => {
+      e.stopPropagation();
+      const status = e.target.checked ? "done" : "todo";
+      try { await upsertItem({ ...it, status }); } catch (err) { console.error(err); }
+      await renderList();
+    });
     li.querySelector("button").addEventListener("click", () => loadIntoForm(it));
     li.querySelector(".li-main").addEventListener("click", () => loadIntoForm(it));
     ul.appendChild(li);

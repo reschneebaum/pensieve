@@ -4,8 +4,9 @@
 //
 // Item shape:
 //   { id, title, type:'event'|'todo', category, start, end, all_day,
-//     priority:0..3, status:'todo'|'doing'|'done', notes, updated_at }
-// `start`/`end` are ISO strings. For all-day items / todos, `end` may be null.
+//     priority:0..3, status:'todo'|'done', notes, updated_at }
+// `start`/`end` are ISO strings. For all-day items / todos, `end` may be null;
+// for an undated todo (no due date), `start` is also null.
 
 import { config } from "./config.js";
 

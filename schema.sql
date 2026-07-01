@@ -11,11 +11,11 @@ create table if not exists public.items (
   title       text not null,
   type        text not null default 'event',   -- 'event' | 'todo'
   category    text not null default 'none',
-  start       timestamptz not null,
+  start       timestamptz,                      -- null = undated todo (no due date)
   "end"       timestamptz,
   all_day     boolean not null default false,
   priority    smallint not null default 0,     -- 0..3
-  status      text not null default 'todo',     -- 'todo' | 'doing' | 'done'
+  status      text not null default 'todo',     -- 'todo' | 'done'
   notes       text default '',
   updated_at  timestamptz not null default now()
 );
@@ -24,6 +24,10 @@ alter table public.items enable row level security;
 
 create policy "anon full access" on public.items
   for all using (true) with check (true);
+
+-- Migration for existing databases: todos may now be undated (no due date),
+-- so `start` must allow null. Safe/idempotent to run again.
+alter table public.items alter column start drop not null;
 
 -- Realtime: make sure the table is in the realtime publication so the
 -- desktop display updates the instant your phone writes a change.
