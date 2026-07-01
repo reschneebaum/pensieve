@@ -74,18 +74,14 @@
           <span>Priority</span>
           <select id="priority">
             <option value="0">None</option>
-            <option value="1">Low ▴</option>
-            <option value="2">Med ▴▴</option>
-            <option value="3">High ▴▴▴</option>
+            <option value="1">Low</option>
+            <option value="2">Med</option>
+            <option value="3">High</option>
           </select>
         </label>
-        <label class="field">
-          <span>Status</span>
-          <select id="status">
-            <option value="todo">To do</option>
-            <option value="doing">In progress</option>
-            <option value="done">Done</option>
-          </select>
+        <label class="check-field" id="done-field" hidden>
+          <input type="checkbox" id="done" />
+          <span>Done</span>
         </label>
       </div>
 
@@ -101,7 +97,7 @@
     </form>
 
     <section id="list">
-      <h2>This week</h2>
+      <h2>All items</h2>
       <ul id="items"></ul>
     </section>
 

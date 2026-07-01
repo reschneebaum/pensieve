@@ -69,9 +69,11 @@ the same item data) specifically so new views are just new render functions:
 - **Month** view — big-picture overview grid. Still to do; slots into the same
   `VIEWS` map in `display.js`.
 - **Agenda** view — a flat chronological list, good for narrow screens.
+- could the calendar have a 'tomorrow' or 'upcoming' section at the bottom if there are any events scheduled tomorrow
 
 ## Glanceability / prioritization
 
+- todos should show all open to-dos, not just ones due that day
 - **Spotlight high-priority items** — a toggle or always-on highlight that makes
   `▴▴▴` items pop (glow, larger, pinned to top of their day).
 - **Sort / filter** — by priority, category, or status; hide done items.
@@ -79,9 +81,8 @@ the same item data) specifically so new views are just new render functions:
 - **Custom icons per category** — beyond color, give each category a glyph for
   even faster recognition.
 - **Custom categories** - sort of like tags? user can add and delete categories + associate a category with a color (+ optional icon per above)
-- hide completed items by default (but make them visible with a toggle in the mobile entry app)
-- if possible: shorten displayed calendar time (say 8am - 6pm) with 'morning' and 'evening' buckets as bookends? allow user to select morning or evening (in addition to/instead of a time range or 'all day')?
-- hide / show hidden?
+- hide completed items by default
+- separate notes section in bottom right? (like built-in Stickies)
 
 ## Data & sync
 
@@ -102,9 +103,24 @@ the same item data) specifically so new views are just new render functions:
 
 
 # UI updates
-- larger font size; larger + bolder priority symbols
-- title text left aligned, due date + priority symbol right aligned
-- lighter (more pastel-ish?) / slightly translucent(?) colors
-- more padding around item text and between items
-- bright red border is kind of hard to look at, especially against bright background colors; make darker? make sure text is readable against the background
+- larger font size; larger + bolder priority symbols ✅
+- title text left aligned, due date + priority symbol right aligned ✅
+- lighter (more pastel-ish?) / slightly translucent(?) colors ✅
+- more padding around item text and between items ✅
+- bright red border is kind of hard to look at, especially against bright background colors; make darker? make sure text is readable against the background ✅
+
+- would also be great to be able to select colors, maybe categories?, via the entry page
+
+7/1
+- when adding a todo, there should be no start/end date entry available, just due date (which is optional) ✅ (due date now optional; undated todos supported — required dropping NOT NULL on `items.start`, see schema.sql migration)
+- when adding an event, there should be no due date entry available, just start/end ✅ (already the case — the entry form swaps date fields by type)
+- i don’t really use the 'in progress' status, just complete or not — let's remove the progress ui, instead show all and only uncompleted todos ✅ (status is now a "Done" checkbox; completed todos are hidden on the display)
+- instead of priority triangles, let's try just ordering by priority (maybe make the color slightly darker for each increase in priority?) ✅ (▴ icons removed; to-dos sort by priority and each priority step deepens the fill color)
+- currently you can only see and edit items due this week (on entry page); should be able to at least check off / delete any item ✅ (entry list now shows all items with an inline check-off; edit/delete via the row)
+
+- colors still a bit too bright, maybe let background seep through a bit? less bright base colors? ✅ (fill alpha lowered to 0.78 so the dark desktop shows through — tune in softFill())
+- remove checkbox (since you can’t check it, and once checked, the row will just disappear anyway) ✅
+- make calendar and todos match stylistically -- same text sizes etc ✅
+  - calendar: more padding, bigger text ✅
+  - todos: less bold ✅
 
