@@ -122,17 +122,6 @@ screens (desktop / iPad); on a phone the two columns stack.
 
 ---
 
-## 5. Make it your iPhone add-app
-
-1. Open `…/entry.html` in **Safari** on your iPhone.
-2. Share button → **Add to Home Screen**.
-
-You now have a `pensieve` icon that opens straight to the add form. Add or
-edit an item, hit save, and (in synced mode) your Mac desktop reflects it within
-a second or two. Tap any item in the "This week" list to edit or delete it.
-
----
-
 ## Customizing
 
 - **Categories & colors:** `CATEGORIES` in `config.js`.
