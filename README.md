@@ -1,19 +1,18 @@
-# glance-cal
+# pensieve
 
-A colorful week-at-a-glance calendar you paint onto your Mac desktop, fed by a
-quick add/edit app on your iPhone. Edit on the phone → the desktop updates on
-its own. No alerts, no alarms — just always there when you look.
+A colorful day-at-a-glance organization tool you paint onto your Mac desktop, fed by a quick add/edit app on your iPhone. 
+
+Edit on the phone → the desktop updates on its own. No alerts, no alarms — just always there when you look.
 
 ```
  iPhone (entry.html)  ──writes──▶  data store  ──realtime──▶  Mac desktop (display.html via Plash)
 ```
 
 - **Color** = category (Work / Health / Personal / …) — edit them in `config.js`.
-- **Priority** = the ▴ / ▴▴ / ▴▴▴ badge on each item.
-- **Status** = in-progress items get a dashed outline; done items go dim + struck through.
-- **Views** = **week** (default) or a two-column **day** view (events | to-dos).
-  Switch from your phone, or pin a screen via URL — see
-  [Display views & modes](#display-views--modes).
+- **Priority** = the higher the priority, the darker the background color of each item.
+- **Status** = done items are hidden by default (but can be seen + edited via the entry page).
+- **Views** = default view is a two-column **day** view (events | to-dos).
+  You can switch to weekly calendar mode from your phone, or pin a screen via URL — see [Display views & modes](#display-views--modes).
 
 Everything is plain HTML/CSS/JS — **no build step, no npm.**
 
@@ -25,7 +24,7 @@ Out of the box it runs in **local mode** (data in your browser's localStorage).
 ES modules need a real web server (not `file://`), so from this folder run:
 
 ```bash
-cd glance-cal
+cd pensieve
 python3 -m http.server 8000
 ```
 
@@ -128,7 +127,7 @@ screens (desktop / iPad); on a phone the two columns stack.
 1. Open `…/entry.html` in **Safari** on your iPhone.
 2. Share button → **Add to Home Screen**.
 
-You now have a `glance-cal` icon that opens straight to the add form. Add or
+You now have a `pensieve` icon that opens straight to the add form. Add or
 edit an item, hit save, and (in synced mode) your Mac desktop reflects it within
 a second or two. Tap any item in the "This week" list to edit or delete it.
 
@@ -156,3 +155,11 @@ a second or two. Tap any item in the "This week" list to edit or delete it.
 See [`IDEAS.md`](IDEAS.md) — future views (month/day/agenda), prioritization
 features, recurring events, and the path from the current obscurity-based
 security model to real protection (Vercel password / Supabase Auth).
+
+---
+
+## Why?
+
+> One simply siphons the excess thoughts from one's mind, pours them into the basin, and examines them at one's leisure.
+
+  —Albus Dumbledore
